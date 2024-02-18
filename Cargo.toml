@@ -1,0 +1,12 @@
+[package]
+name = "rgb-2024"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+smart-leds = "0.4.0"
+shark = { git = "https://github.com/frc3636/shark" }
+palette = "0.7.3"
+rs_ws281x = "0.5.1"
