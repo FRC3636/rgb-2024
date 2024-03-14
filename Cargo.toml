@@ -10,3 +10,5 @@ smart-leds = "0.4.0"
 shark = { git = "https://github.com/frc3636/shark" }
 palette = "0.7.3"
 rs_ws281x = "0.5.1"
+frclib-nt4 = { git = "https://github.com/oh-yes-0-fps/frclib-nettables", version = "0.1.5" }
+tokio = "1.36.0"

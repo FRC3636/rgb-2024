@@ -1,9 +1,23 @@
+use std::error::Error;
+use std::net::{Ipv4Addr, SocketAddrV4};
+
+use frclib_nt4::client::AsyncClientHandle;
 use palette::{Clamp, IntoColor, LinSrgb, Srgb};
 use shark::point::{primitives::line, Point};
 use shark::shader::{
-    primitives::{checkerboard, color, off, time_rainbow},
+    primitives::{checkerboard, time_rainbow},
     FragOne, FragThree, Fragment, IntoShader, Shader, ShaderExt,
 };
+
+async fn setup_nt_client() -> Result<AsyncClientHandle, frclib_nt4::NetworkTablesError> {
+    let client = AsyncClientHandle::start(
+        SocketAddrV4::new(Ipv4Addr::new(10, 36, 36, 2), 5810),
+        Default::default(),
+        "RGB Pi".to_string(),
+    )
+    .await?;
+    Ok(client)
+}
 
 fn shader() -> impl Shader<FragThree> {
     let toggle = (|frag: FragOne| {
@@ -30,7 +44,12 @@ const STRIP_PORT: i32 = 10;
 const STRIP_LENGTH: i32 = 100;
 const LEDS_PER_METER: i32 = 144;
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let client = setup_nt_client().await.unwrap();
+    let subscriptions: &[&str] = &[];
+    let subscriptions = client.subscribe(subscriptions).await?;
+
     let mut strip = rs_ws281x::ControllerBuilder::new()
         .channel(
             0,
@@ -41,12 +60,13 @@ fn main() {
                 .brightness(255)
                 .build(),
         )
-        .build().unwrap();
+        .build()
+        .unwrap();
     let shader = shader();
     let start = std::time::Instant::now();
     loop {
         let time = start.elapsed();
-        let colors = render(&shader, points(), time.as_secs_f64()).collect::<Vec<[u8;4]>>();
+        let colors = render(&shader, points(), time.as_secs_f64()).collect::<Vec<[u8; 4]>>();
         let leds = strip.leds_mut(0);
         leds.copy_from_slice(colors.as_slice());
         strip.render().unwrap();
@@ -74,7 +94,7 @@ fn render<'a>(
                 (c.red * 255.0) as u8,
                 (c.green * 255.0) as u8,
                 (c.blue * 255.0) as u8,
-                0
+                0,
             ]
         })
 }
