@@ -1,23 +1,14 @@
-use std::error::Error;
-use std::net::{Ipv4Addr, SocketAddrV4};
+pub mod nt;
 
-use frclib_nt4::client::AsyncClientHandle;
+use std::error::Error;
+
+use nt::setup_nt_client;
 use palette::{Clamp, IntoColor, LinSrgb, Srgb};
 use shark::point::{primitives::line, Point};
 use shark::shader::{
     primitives::{checkerboard, time_rainbow},
     FragOne, FragThree, Fragment, IntoShader, Shader, ShaderExt,
 };
-
-async fn setup_nt_client() -> Result<AsyncClientHandle, frclib_nt4::NetworkTablesError> {
-    let client = AsyncClientHandle::start(
-        SocketAddrV4::new(Ipv4Addr::new(10, 36, 36, 2), 5810),
-        Default::default(),
-        "RGB Pi".to_string(),
-    )
-    .await?;
-    Ok(client)
-}
 
 fn shader() -> impl Shader<FragThree> {
     let toggle = (|frag: FragOne| {
@@ -46,9 +37,7 @@ const LEDS_PER_METER: i32 = 144;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let client = setup_nt_client().await.unwrap();
-    let subscriptions: &[&str] = &[];
-    let subscriptions = client.subscribe(subscriptions).await?;
+    let (client, subscription) = setup_nt_client().await.unwrap();
 
     let mut strip = rs_ws281x::ControllerBuilder::new()
         .channel(
