@@ -28,7 +28,7 @@ impl From<u64> for NoteState {
 
 pub async fn setup_nt_client() -> Result<(Client, Subscription), Box<dyn Error>> {
     let client = Client::try_new_w_config(
-        SocketAddrV4::new(Ipv4Addr::new(10, 36, 36, 1), 5810),
+        SocketAddrV4::new(Ipv4Addr::new(10, 36, 36, 2), 5810),
         Config {
             ..Default::default()
         },
