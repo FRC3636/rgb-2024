@@ -4,7 +4,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use network_tables::{v4::{Client, Config, Subscription, Type}, Value};
+use network_tables::{
+    v4::{Client, Config, Subscription, Type},
+    Value,
+};
 
 #[repr(u64)]
 pub enum NoteState {
@@ -34,7 +37,9 @@ pub async fn setup_nt_client() -> Result<(Client, Subscription), Box<dyn Error>>
     let topic = client
         .publish_topic("RGB/NoteState", Type::Int, None)
         .await?;
-    client.publish_value(&topic, &Value::Integer(0u64.into())).await?;
+    client
+        .publish_value(&topic, &Value::Integer(0u64.into()))
+        .await?;
     let subscription = client.subscribe_w_options(&["RGB/NoteState"], None).await?;
     Ok((client, subscription))
 }

@@ -8,14 +8,12 @@ use nt::{nt_subscription_handler, setup_nt_client, NoteState};
 use palette::{Clamp, IntoColor, LinSrgb};
 use shaders::intake_indicator;
 use shark::point::{primitives::line, Point};
-use shark::shader::{
-    FragThree, Shader,
-};
+use shark::shader::{FragThree, Shader};
 
 fn points() -> impl Iterator<Item = Point> {
     line(
         Point::new(0.0, 0.0, 0.0),
-        Point::new((STRIP_LENGTH / LEDS_PER_METER) as _, 0.0, 0.0),
+        Point::new(1.0, 0.0, 0.0),
         STRIP_LENGTH as _,
     )
 }
