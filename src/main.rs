@@ -1,27 +1,16 @@
 pub mod nt;
+pub mod shaders;
 
 use std::error::Error;
+use std::sync::{Arc, Mutex};
 
-use nt::setup_nt_client;
-use palette::{Clamp, IntoColor, LinSrgb, Srgb};
+use nt::{nt_subscription_handler, setup_nt_client, NoteState};
+use palette::{Clamp, IntoColor, LinSrgb};
+use shaders::intake_indicator;
 use shark::point::{primitives::line, Point};
 use shark::shader::{
-    primitives::{checkerboard, time_rainbow},
-    FragOne, FragThree, Fragment, IntoShader, Shader, ShaderExt,
+    FragThree, Shader,
 };
-
-fn shader() -> impl Shader<FragThree> {
-    let toggle = (|frag: FragOne| {
-        if frag.time() % 2.0 > 1.0 {
-            Srgb::new(1.0, 1.0, 1.0)
-        } else {
-            Srgb::new(0.0, 0.0, 0.0)
-        }
-    })
-    .into_shader();
-    let checkerboard = checkerboard(toggle, time_rainbow().scale_time(40.0), 0.2001);
-    checkerboard.extrude().extrude()
-}
 
 fn points() -> impl Iterator<Item = Point> {
     line(
@@ -37,7 +26,11 @@ const LEDS_PER_METER: i32 = 144;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let (client, subscription) = setup_nt_client().await.unwrap();
+    let (_client, subscription) = setup_nt_client().await.unwrap();
+
+    let note_state = Arc::new(Mutex::new(NoteState::None));
+
+    tokio::spawn(nt_subscription_handler(subscription, note_state.clone()));
 
     let mut strip = rs_ws281x::ControllerBuilder::new()
         .channel(
@@ -51,7 +44,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         )
         .build()
         .unwrap();
-    let shader = shader();
+
+    let shader = intake_indicator(note_state);
     let start = std::time::Instant::now();
     loop {
         let time = start.elapsed();
@@ -80,9 +74,9 @@ fn render<'a>(
         })
         .map(|c| {
             [
-                (c.red * 255.0) as u8,
-                (c.green * 255.0) as u8,
                 (c.blue * 255.0) as u8,
+                (c.green * 255.0) as u8,
+                (c.red * 255.0) as u8,
                 0,
             ]
         })

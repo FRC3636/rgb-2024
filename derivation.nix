@@ -5,6 +5,8 @@ naersk.buildPackage {
   version = "0.0.1";
   src = ./.;
 
+  nativeBuildInputs = [ pkgs.git ];
+
   preBuild = ''
     export BINDGEN_EXTRA_CLANG_ARGS="$(< ${stdenv.cc}/nix-support/libc-crt1-cflags) \
       $(< ${stdenv.cc}/nix-support/libc-cflags) \
