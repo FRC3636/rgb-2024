@@ -40,7 +40,7 @@ pub async fn setup_nt_client() -> Result<(Client, Subscription), Box<dyn Error>>
     client
         .publish_value(&topic, &Value::Integer(0u64.into()))
         .await?;
-    let subscription = client.subscribe_w_options(&["RGB/NoteState"], None).await?;
+    let subscription = client.subscribe_w_options(&["RGB/NoteState", "AdvantageKit/RealOutputs/DriveTrain/Estimated Pose"], None).await?;
     Ok((client, subscription))
 }
 
