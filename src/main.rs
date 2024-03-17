@@ -32,18 +32,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     tokio::spawn(nt_subscription_handler(subscription, note_state.clone()));
 
-    // let mut strip = rs_ws281x::ControllerBuilder::new()
-    //     .channel(
-    //         0,
-    //         rs_ws281x::ChannelBuilder::new()
-    //             .pin(STRIP_PORT)
-    //             .count(STRIP_LENGTH)
-    //             .strip_type(rs_ws281x::StripType::Ws2812)
-    //             .brightness(255)
-    //             .build(),
-    //     )
-    //     .build()
-    //     .unwrap();
     let spi = spi::SpiDevice::open("/dev/spidev0.0").unwrap();
     let mut strip = ws2812_spi::Ws2812::new(spi);
 
