@@ -62,9 +62,9 @@ fn render<'a>(
         })
         .map(|c| {
             RGB8::new(
-                (c.blue * 256.0) as u8,
-                (c.green * 256.0) as u8,
                 (c.red * 256.0) as u8,
+                (c.green * 256.0) as u8,
+                (c.blue * 256.0) as u8,
             )
         })
 }
