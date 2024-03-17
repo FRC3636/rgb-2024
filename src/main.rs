@@ -1,5 +1,6 @@
-pub mod nt;
-pub mod shaders;
+mod nt;
+mod shaders;
+mod spi;
 
 use std::error::Error;
 use std::sync::{Arc, Mutex};
@@ -9,6 +10,7 @@ use palette::{Clamp, IntoColor, LinSrgb};
 use shaders::intake_indicator;
 use shark::point::{primitives::line, Point};
 use shark::shader::{FragThree, Shader};
+use smart_leds::{SmartLedsWrite, RGB8};
 
 fn points() -> impl Iterator<Item = Point> {
     line(
@@ -30,27 +32,27 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     tokio::spawn(nt_subscription_handler(subscription, note_state.clone()));
 
-    let mut strip = rs_ws281x::ControllerBuilder::new()
-        .channel(
-            0,
-            rs_ws281x::ChannelBuilder::new()
-                .pin(STRIP_PORT)
-                .count(STRIP_LENGTH)
-                .strip_type(rs_ws281x::StripType::Ws2812)
-                .brightness(255)
-                .build(),
-        )
-        .build()
-        .unwrap();
+    // let mut strip = rs_ws281x::ControllerBuilder::new()
+    //     .channel(
+    //         0,
+    //         rs_ws281x::ChannelBuilder::new()
+    //             .pin(STRIP_PORT)
+    //             .count(STRIP_LENGTH)
+    //             .strip_type(rs_ws281x::StripType::Ws2812)
+    //             .brightness(255)
+    //             .build(),
+    //     )
+    //     .build()
+    //     .unwrap();
+    let spi = spi::SpiDevice::open("/dev/spidev0.0").unwrap();
+    let mut strip = ws2812_spi::Ws2812::new(spi);
 
     let shader = intake_indicator(note_state);
     let start = std::time::Instant::now();
     loop {
         let time = start.elapsed();
-        let colors = render(&shader, points(), time.as_secs_f64()).collect::<Vec<[u8; 4]>>();
-        let leds = strip.leds_mut(0);
-        leds.copy_from_slice(colors.as_slice());
-        strip.render().unwrap();
+        let colors = render(&shader, points(), time.as_secs_f64());
+        strip.write(colors).unwrap();
     }
 }
 
@@ -58,7 +60,7 @@ fn render<'a>(
     shader: &'a impl Shader<FragThree>,
     points: impl Iterator<Item = Point> + 'a,
     time: f64,
-) -> impl Iterator<Item = [u8; 4]> + 'a {
+) -> impl Iterator<Item = RGB8> + 'a {
     points
         .map(move |point| {
             shader.shade(FragThree {
@@ -71,11 +73,10 @@ fn render<'a>(
             c.clamp()
         })
         .map(|c| {
-            [
-                (c.blue * 255.0) as u8,
-                (c.green * 255.0) as u8,
-                (c.red * 255.0) as u8,
-                0,
-            ]
+            RGB8::new(
+                (c.blue * 256.0) as u8,
+                (c.green * 256.0) as u8,
+                (c.red * 256.0) as u8,
+            )
         })
 }
