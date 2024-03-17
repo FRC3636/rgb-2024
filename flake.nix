@@ -14,9 +14,5 @@
           rgb-2024 = pkgs.callPackage ./derivation.nix { naersk = naersk'; };
           default = rgb-2024;
         };
-        devShells.default =
-          (pkgs.mkShell.override { stdenv = pkgs.clangStdenv; }) {
-            LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
-          };
       }));
 }
