@@ -13,6 +13,8 @@ use shark::point::Point;
 use shark::shader::{FragThree, Shader};
 use smart_leds::{SmartLedsWrite, RGB8};
 
+const TARGET_FPS: f64 = 144.0;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let (_client, subscription) = setup_nt_client().await?;
@@ -26,9 +28,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let indicator_shader = intake_indicator(note_state);
 
-    let start = std::time::Instant::now();
+    let target_frame_time = std::time::Duration::from_secs_f64(1.0 / TARGET_FPS);
+
+    let loop_start = std::time::Instant::now();
     loop {
-        let time = start.elapsed();
+        let frame_start = std::time::Instant::now();
+        let time = loop_start.elapsed();
 
         let colors = render(
             &indicator_shader,
@@ -42,6 +47,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
             time.as_secs_f64(),
         );
         intake_indicator_right.write(colors).unwrap();
+
+        if let Some(remaining) = target_frame_time.checked_sub(frame_start.elapsed()) {
+            tokio::time::sleep(remaining).await;
+        }
     }
 }
 

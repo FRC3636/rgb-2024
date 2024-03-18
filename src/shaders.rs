@@ -2,29 +2,11 @@ use std::sync::{Arc, Mutex};
 
 use crate::nt::NoteState;
 use noise::NoiseFn;
-use palette::{num::Abs, IntoColor, LinSrgb, Okhsl, Srgb};
+use palette::{IntoColor, LinSrgb, Okhsl, Srgb};
 use shark::shader::{
     primitives::{checkerboard, color},
     FragOne, FragThree, Fragment, IntoShader, Shader, ShaderExt,
 };
-
-fn multiply<L: Shader<FragOne>, R: Shader<FragOne>>(left: L, right: R) -> impl Shader<FragOne> {
-    (move |frag: FragOne| {
-        let left = left.shade(frag).into_color();
-        let right = right.shade(frag).into_color();
-        left * right
-    })
-    .into_shader()
-}
-
-fn add<L: Shader<FragOne>, R: Shader<FragOne>>(left: L, right: R) -> impl Shader<FragOne> {
-    (move |frag: FragOne| {
-        let left = left.shade(frag).into_color();
-        let right = right.shade(frag).into_color();
-        left + right
-    })
-    .into_shader()
-}
 
 fn noise(generator: impl NoiseFn<f64, 2>) -> impl Shader<FragOne> {
     (move |frag: FragOne| {
@@ -60,12 +42,11 @@ pub fn intake_indicator(note_state: Arc<Mutex<NoteState>>) -> impl Shader<FragTh
     (move |frag: FragOne| {
         // println!("{:?}", frag.pos);
         match *note_state.lock().unwrap() {
-            NoteState::None => multiply(
-                add(noise(perlin), color(Okhsl::new(0.0, 0.0, 0.35))),
-                color(LinSrgb::new(0.0, 0.0, 0.8)),
-            )
-            .shade(frag)
-            .into_color(),
+            NoteState::None => noise(perlin)
+                .add(color(Okhsl::new(0.0, 0.0, 0.35)))
+                .multiply(color(LinSrgb::new(0.0, 0.0, 0.8)))
+                .shade(frag)
+                .into_color(),
             NoteState::Handoff => conveyor(
                 color(Srgb::new(1.0, 0.35, 0.0)),
                 color(Srgb::new(1.0, 1.0, 1.0)),
