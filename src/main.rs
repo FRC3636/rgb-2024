@@ -1,6 +1,7 @@
 mod nt;
 mod shaders;
 mod spi;
+mod strips;
 
 use std::error::Error;
 use std::sync::{Arc, Mutex};
@@ -8,39 +9,39 @@ use std::sync::{Arc, Mutex};
 use nt::{nt_subscription_handler, setup_nt_client, NoteState};
 use palette::{Clamp, IntoColor, LinSrgb};
 use shaders::intake_indicator;
-use shark::point::{primitives::line, Point};
+use shark::point::Point;
 use shark::shader::{FragThree, Shader};
 use smart_leds::{SmartLedsWrite, RGB8};
 
-fn points() -> impl Iterator<Item = Point> {
-    line(
-        Point::new(0.0, 0.0, 0.0),
-        Point::new(1.0, 0.0, 0.0),
-        STRIP_LENGTH as _,
-    )
-}
-
-const STRIP_PORT: i32 = 10;
-const STRIP_LENGTH: i32 = 100;
-const LEDS_PER_METER: i32 = 144;
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let (_client, subscription) = setup_nt_client().await.unwrap();
+    let (_client, subscription) = setup_nt_client().await?;
 
     let note_state = Arc::new(Mutex::new(NoteState::None));
 
     tokio::spawn(nt_subscription_handler(subscription, note_state.clone()));
 
-    let spi = spi::SpiDevice::open("/dev/spidev0.0").unwrap();
-    let mut strip = ws2812_spi::Ws2812::new(spi);
+    let mut intake_indicator_left = strips::gpio_10()?;
+    let mut intake_indicator_right = strips::gpio_18()?;
 
-    let shader = intake_indicator(note_state);
+    let indicator_shader = intake_indicator(note_state);
+
     let start = std::time::Instant::now();
     loop {
         let time = start.elapsed();
-        let colors = render(&shader, points(), time.as_secs_f64());
-        strip.write(colors).unwrap();
+
+        let colors = render(
+            &indicator_shader,
+            strips::intake_indicator(),
+            time.as_secs_f64(),
+        );
+        intake_indicator_left.write(colors).unwrap();
+        let colors = render(
+            &indicator_shader,
+            strips::intake_indicator(),
+            time.as_secs_f64(),
+        );
+        intake_indicator_right.write(colors).unwrap();
     }
 }
 

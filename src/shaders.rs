@@ -69,7 +69,7 @@ pub fn intake_indicator(note_state: Arc<Mutex<NoteState>>) -> impl Shader<FragTh
             NoteState::Handoff => conveyor(
                 color(Srgb::new(1.0, 0.35, 0.0)),
                 color(Srgb::new(1.0, 1.0, 1.0)),
-                0.15,
+                0.03429,
                 0.8,
             )
             .shade(frag)
