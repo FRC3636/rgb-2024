@@ -1,13 +1,40 @@
 use std::sync::{Arc, Mutex};
 
 use crate::nt::NoteState;
-use palette::{IntoColor, LinSrgb, Srgb};
+use noise::NoiseFn;
+use palette::{num::Abs, IntoColor, LinSrgb, Okhsl, Srgb};
 use shark::shader::{
     primitives::{checkerboard, color},
-    FragOne, FragThree, IntoShader, Shader, ShaderExt,
+    FragOne, FragThree, Fragment, IntoShader, Shader, ShaderExt,
 };
 
-pub fn slide_over_time<S: Shader<FragOne>>(shader: S) -> impl Shader<FragOne> {
+fn multiply<L: Shader<FragOne>, R: Shader<FragOne>>(left: L, right: R) -> impl Shader<FragOne> {
+    (move |frag: FragOne| {
+        let left = left.shade(frag).into_color();
+        let right = right.shade(frag).into_color();
+        left * right
+    })
+    .into_shader()
+}
+
+fn add<L: Shader<FragOne>, R: Shader<FragOne>>(left: L, right: R) -> impl Shader<FragOne> {
+    (move |frag: FragOne| {
+        let left = left.shade(frag).into_color();
+        let right = right.shade(frag).into_color();
+        left + right
+    })
+    .into_shader()
+}
+
+fn noise(generator: impl NoiseFn<f64, 2>) -> impl Shader<FragOne> {
+    (move |frag: FragOne| {
+        let val = generator.get([frag.pos * 25.0, frag.time()]);
+        Okhsl::new(0.0, 0.0, val.abs())
+    })
+    .into_shader()
+}
+
+fn slide_over_time<S: Shader<FragOne>>(shader: S) -> impl Shader<FragOne> {
     (move |frag: FragOne| {
         let new_pos = frag.pos + frag.time;
         shader.shade(FragOne {
@@ -18,18 +45,33 @@ pub fn slide_over_time<S: Shader<FragOne>>(shader: S) -> impl Shader<FragOne> {
     .into_shader()
 }
 
+fn conveyor<S1: Shader<FragOne>, S2: Shader<FragOne>>(
+    shader1: S1,
+    shader2: S2,
+    section_len: f64,
+    speed: f64,
+) -> impl Shader<FragOne> {
+    slide_over_time(checkerboard(shader1, shader2, section_len)).scale_time(speed)
+}
+
 // This is cursed and bad because of how networktables works but it's the only part of the intake indicator that will be infected by it
 pub fn intake_indicator(note_state: Arc<Mutex<NoteState>>) -> impl Shader<FragThree> {
+    let perlin = noise::Perlin::new(0);
     (move |frag: FragOne| {
         // println!("{:?}", frag.pos);
         match *note_state.lock().unwrap() {
-            NoteState::None => LinSrgb::new(0.0, 0.0, 0.0),
-            NoteState::Handoff => slide_over_time(checkerboard(
+            NoteState::None => multiply(
+                add(noise(perlin), color(Okhsl::new(0.0, 0.0, 0.35))),
+                color(LinSrgb::new(0.0, 0.0, 0.8)),
+            )
+            .shade(frag)
+            .into_color(),
+            NoteState::Handoff => conveyor(
                 color(Srgb::new(1.0, 0.35, 0.0)),
                 color(Srgb::new(1.0, 1.0, 1.0)),
                 0.15,
-            ))
-            .scale_time(0.8)
+                0.8,
+            )
             .shade(frag)
             .into_color(),
             // NoteState::Handoff => LinSrgb::new(frag.pos, 0.0, 0.0),
