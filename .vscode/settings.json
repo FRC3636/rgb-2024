@@ -1,0 +1,3 @@
+{
+    "rust-analyzer.cargo.sysroot": "/home/gavin/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu"
+}
