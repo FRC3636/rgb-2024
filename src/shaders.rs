@@ -36,7 +36,10 @@ fn conveyor<S1: Shader<FragOne>, S2: Shader<FragOne>>(
     slide_over_time(checkerboard(shader1, shader2, section_len)).scale_time(speed)
 }
 
-fn boil<'a>(perlin: &'a noise::Perlin, mul: impl Shader<FragOne> + 'a) -> impl Shader<FragOne> + 'a {
+fn boil<'a>(
+    perlin: &'a noise::Perlin,
+    mul: impl Shader<FragOne> + 'a,
+) -> impl Shader<FragOne> + 'a {
     noise(perlin)
         .add(color(Okhsl::new(0.0, 0.0, 0.35)))
         .multiply(mul)
@@ -54,15 +57,15 @@ pub fn intake_indicator(note_state: Arc<Mutex<NoteState>>) -> impl Shader<FragTh
             NoteState::Handoff => conveyor(
                 color(Srgb::new(1.0, 0.35, 0.0)),
                 color(Srgb::new(1.0, 1.0, 1.0)),
-                0.03429,
-                0.8,
+                0.1,
+                0.5,
             )
             .shade(frag)
             .into_color(),
             // NoteState::Handoff => LinSrgb::new(frag.pos, 0.0, 0.0),
             NoteState::Shooter => boil(&perlin, color(LinSrgb::new(0.0, 1.0, 0.0)))
-            .shade(frag)
-            .into_color(),
+                .shade(frag)
+                .into_color(),
         }
     })
     .into_shader()

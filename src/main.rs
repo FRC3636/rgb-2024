@@ -23,8 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     tokio::spawn(nt_subscription_handler(subscription, note_state.clone()));
 
-    let mut intake_indicator_left = strips::gpio_10()?;
-    let mut intake_indicator_right = strips::gpio_18()?;
+    let mut intake_indicator_strip = strips::gpio_10()?;
 
     let indicator_shader = intake_indicator(note_state);
 
@@ -40,13 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             strips::intake_indicator(),
             time.as_secs_f64(),
         );
-        intake_indicator_left.write(colors).unwrap();
-        let colors = render(
-            &indicator_shader,
-            strips::intake_indicator(),
-            time.as_secs_f64(),
-        );
-        intake_indicator_right.write(colors).unwrap();
+        intake_indicator_strip.write(colors).unwrap();
 
         if let Some(remaining) = target_frame_time.checked_sub(frame_start.elapsed()) {
             std::thread::sleep(remaining);
