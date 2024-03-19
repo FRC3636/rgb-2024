@@ -6,13 +6,13 @@ use crate::spi::SpiDevice;
 pub fn intake_indicator() -> impl Iterator<Item = Point> + Clone {
     //TODO: Figure out the real positions
     line(
-        Point::new(0.0, 0.0, 0.0),
-        Point::new(0.2286, 0.0, 0.0),
+        Point::new(0.0, 1.0, 0.0),
+        Point::new(0.2286, 1.0, 0.0),
         33,
     ).chain(
         line(
-            Point::new(0.0, 0.0, 0.0),
             Point::new(0.2286, 0.0, 0.0),
+            Point::new(0.0, 0.0, 0.0),
             33,
         )
     )
