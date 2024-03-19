@@ -36,15 +36,19 @@ fn conveyor<S1: Shader<FragOne>, S2: Shader<FragOne>>(
     slide_over_time(checkerboard(shader1, shader2, section_len)).scale_time(speed)
 }
 
+fn boil<'a>(perlin: &'a noise::Perlin, mul: impl Shader<FragOne> + 'a) -> impl Shader<FragOne> + 'a {
+    noise(perlin)
+        .add(color(Okhsl::new(0.0, 0.0, 0.35)))
+        .multiply(mul)
+}
+
 // This is cursed and bad because of how networktables works but it's the only part of the intake indicator that will be infected by it
 pub fn intake_indicator(note_state: Arc<Mutex<NoteState>>) -> impl Shader<FragThree> {
     let perlin = noise::Perlin::new(0);
     (move |frag: FragOne| {
         // println!("{:?}", frag.pos);
         match *note_state.lock().unwrap() {
-            NoteState::None => noise(perlin)
-                .add(color(Okhsl::new(0.0, 0.0, 0.35)))
-                .multiply(color(LinSrgb::new(0.0, 0.0, 0.8)))
+            NoteState::None => boil(&perlin, color(LinSrgb::new(0.0, 0.0, 0.8)))
                 .shade(frag)
                 .into_color(),
             NoteState::Handoff => conveyor(
@@ -56,7 +60,9 @@ pub fn intake_indicator(note_state: Arc<Mutex<NoteState>>) -> impl Shader<FragTh
             .shade(frag)
             .into_color(),
             // NoteState::Handoff => LinSrgb::new(frag.pos, 0.0, 0.0),
-            NoteState::Shooter => LinSrgb::new(0.0, 1.0, 0.0),
+            NoteState::Shooter => boil(&perlin, color(LinSrgb::new(0.0, 1.0, 0.0)))
+            .shade(frag)
+            .into_color(),
         }
     })
     .into_shader()
