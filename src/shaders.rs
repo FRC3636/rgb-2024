@@ -63,7 +63,7 @@ pub fn intake_indicator(note_state: Arc<Mutex<NoteState>>) -> impl Shader<FragTh
             .shade(frag)
             .into_color(),
             // NoteState::Handoff => LinSrgb::new(frag.pos, 0.0, 0.0),
-            NoteState::Shooter => boil(&perlin, color(LinSrgb::new(0.0, 1.0, 0.0)))
+            NoteState::Shooter => boil(&perlin, color(LinSrgb::new(0.0, 1.0, 0.05)))
                 .shade(frag)
                 .into_color(),
         }
