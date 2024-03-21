@@ -46,11 +46,15 @@ fn boil<'a>(
 }
 
 // This is cursed and bad because of how networktables works but it's the only part of the intake indicator that will be infected by it
-pub fn intake_indicator(note_state: Arc<Mutex<NoteState>>) -> impl Shader<FragThree> {
+pub fn intake_indicator(note_state: Arc<Mutex<Option<NoteState>>>) -> impl Shader<FragThree> {
     let perlin = noise::Perlin::new(0);
     (move |frag: FragOne| {
-        // println!("{:?}", frag.pos);
-        match *note_state.lock().unwrap() {
+        let Some(ref state) = *note_state.lock().unwrap() else {
+            return boil(&perlin, color(Srgb::new(1.0, 0.35, 0.0)))
+            .shade(frag)
+            .into_color()
+        };
+        match state {
             NoteState::None => boil(&perlin, color(LinSrgb::new(0.0, 0.0, 0.8)))
                 .shade(frag)
                 .into_color(),

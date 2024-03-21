@@ -6,7 +6,7 @@ mod strips;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
-use nt::{nt_subscription_handler, setup_nt_client, NoteState};
+use nt::nt_subscription_handler;
 use palette::{Clamp, IntoColor, LinSrgb};
 use shaders::intake_indicator;
 use shark::point::Point;
@@ -17,11 +17,8 @@ const TARGET_FPS: f64 = 60.0;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let (_client, subscription) = setup_nt_client().await?;
-
-    let note_state = Arc::new(Mutex::new(NoteState::None));
-
-    tokio::spawn(nt_subscription_handler(subscription, note_state.clone()));
+    let note_state = Arc::new(Mutex::new(None));
+    tokio::spawn(nt_subscription_handler(note_state.clone()));
 
     let mut intake_indicator_strip = strips::gpio_10()?;
 

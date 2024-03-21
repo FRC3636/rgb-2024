@@ -2,6 +2,7 @@ use std::{
     error::Error,
     net::{Ipv4Addr, SocketAddrV4},
     sync::{Arc, Mutex},
+    time::Duration
 };
 
 use network_tables::{
@@ -26,7 +27,7 @@ impl From<u64> for NoteState {
     }
 }
 
-pub async fn setup_nt_client() -> Result<(Client, Subscription), Box<dyn Error>> {
+async fn setup_nt_client() -> Result<(Client, Subscription), network_tables::Error> {
     let client = Client::try_new_w_config(
         SocketAddrV4::new(Ipv4Addr::new(10, 36, 36, 2), 5810),
         Config {
@@ -45,19 +46,29 @@ pub async fn setup_nt_client() -> Result<(Client, Subscription), Box<dyn Error>>
 }
 
 pub async fn nt_subscription_handler(
-    mut subscription: Subscription,
-    note_state: Arc<Mutex<NoteState>>,
+    note_state: Arc<Mutex<Option<NoteState>>>,
 ) -> Result<(), Box<dyn Error + Send>> {
+    let (_client, mut subscription) = loop {
+        match setup_nt_client().await {
+            Err(e) => {
+                println!("Failed to connect to a network tables server: {}", e);
+                println!("Waiting 400ms and trying again");
+                tokio::time::sleep(Duration::from_millis(400)).await;
+            },
+            Ok(info) => break info
+        }
+    };
+
     loop {
         let Some(update) = subscription.next().await else {
             break;
         };
         println!("{:?}", update);
-        if update.topic_name == String::from("RGB/NoteState") {
+        if &update.topic_name == "RGB/NoteState" {
             let state = update.data.as_u64().unwrap_or(0);
             let state = state.into();
             let mut lock = note_state.lock().unwrap();
-            *lock = state;
+            lock.replace(state);
         }
     }
 
