@@ -64,7 +64,7 @@ pub async fn nt_subscription_handler(
             break;
         };
         println!("{:?}", update);
-        if &update.topic_name == "RGB/NoteState" {
+        if &update.topic_name == "RGB/Note State" {
             let state = update.data.as_u64().unwrap_or(0);
             let state = state.into();
             let mut lock = note_state.lock().unwrap();
