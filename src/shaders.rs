@@ -54,6 +54,7 @@ pub fn intake_indicator(note_state: Arc<Mutex<Option<NoteState>>>) -> impl Shade
             .shade(frag)
             .into_color()
         };
+        
         match state {
             NoteState::None => boil(&perlin, color(LinSrgb::new(0.0, 0.0, 0.8)))
                 .shade(frag)

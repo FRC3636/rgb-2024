@@ -10,11 +10,10 @@ use network_tables::{
     Value,
 };
 
-#[repr(u64)]
 pub enum NoteState {
-    None = 0,
-    Handoff = 1,
-    Shooter = 2,
+    None,
+    Handoff,
+    Shooter,
 }
 impl From<u64> for NoteState {
     fn from(val: u64) -> Self {
@@ -58,6 +57,10 @@ pub async fn nt_subscription_handler(
             Ok(info) => break info
         }
     };
+
+    {
+        *note_state.lock().unwrap() = Some(NoteState::None);
+    }
 
     loop {
         let Some(update) = subscription.next().await else {
