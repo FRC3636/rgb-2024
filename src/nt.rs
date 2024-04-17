@@ -14,6 +14,7 @@ pub enum NoteState {
     None,
     Handoff,
     Shooter,
+    AssertFailure,
 }
 impl From<u64> for NoteState {
     fn from(val: u64) -> Self {
@@ -21,6 +22,7 @@ impl From<u64> for NoteState {
             0 => NoteState::None,
             1 => NoteState::Handoff,
             2 => NoteState::Shooter,
+            3 => NoteState::AssertFailure,
             _ => NoteState::None,
         }
     }

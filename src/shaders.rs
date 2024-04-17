@@ -71,6 +71,9 @@ pub fn intake_indicator(note_state: Arc<Mutex<Option<NoteState>>>) -> impl Shade
             NoteState::Shooter => boil(&perlin, color(LinSrgb::new(0.0, 1.0, 0.05)))
                 .shade(frag)
                 .into_color(),
+            NoteState::AssertFailure => boil(&perlin, color(LinSrgb::new(1.0, 0.0, 0.05)))
+                .shade(frag)
+                .into_color(),
         }
     })
     .into_shader()
