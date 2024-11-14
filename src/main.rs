@@ -13,7 +13,7 @@ use shark::point::Point;
 use shark::shader::{FragThree, Shader};
 use smart_leds::{SmartLedsWrite, RGB8};
 
-const TARGET_FPS: f64 = 60.0;
+const TARGET_FPS: f64 = 30.0;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
